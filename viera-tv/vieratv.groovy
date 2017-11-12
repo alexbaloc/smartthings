@@ -26,6 +26,31 @@ metadata {
     command "hdmi2"
     command "hdmi3"
 
+    //commands not exposed via UI
+    command "apps"
+    command "arrowright"
+    command "arrowleft"
+    command "arrowup"
+    command "arrowdown"
+    command "ok"
+    command "back"
+    command "cancel"
+    command "volumeup"
+    command "volumedown"
+    command "chanelup"
+    command "chaneldown"
+    command "red"
+    command "green"
+    command "yellow"
+    command "blue"
+
+    command "play"
+    command "pause"
+    command "stop"
+
+    // See list here for more supported Viera Commands
+    // https://irule.desk.com/customer/portal/questions/1020311-panasonic-viera-ip-control
+
     command "checkVolume"
 
     // Currently selected input source
@@ -162,7 +187,7 @@ def parse(String description) {
 
 //  log.debug "headers: $headerMap"
 //  log.debug "status: $status"
-  log.debug "data: $data"
+//  log.debug "data: $data"
 //  log.debug "xml: $xml"
 
   if (msg.xml) {
@@ -230,6 +255,41 @@ def checkVolume() {
 
   return sendQuery()
 }
+
+def apps() {
+  sendEvent(name:"Command", value: "Apps", displayed: true) 
+  return sendCommand('APPS')
+}
+
+def arrowright() { return sendCommand('RIGHT') }
+def arrowleft() { return sendCommand('LEFT') }
+def arrowup() { return sendCommand('UP') }
+def arrowdown() { return sendCommand('DOWN') }
+def ok() { return sendCommand('ENTER') }
+def back() { return sendCommand('RETURN') }
+def cancel() { return sendCommand('CANCEL') }
+
+def red() { return sendCommand('RED') }
+def green() { return sendCommand('GREEN') }
+def yellow() { return sendCommand('YELLOW') }
+def blue() { return sendCommand('BLUE') }
+
+def play() { 
+  sendEvent(name:"Command", value: "Play", displayed: true) 
+  return sendCommand('PLAY')
+}
+def pause() { 
+  sendEvent(name:"Command", value: "Pause", displayed: true) 
+  return sendCommand('PAUSE')
+}
+def stop() { 
+  sendEvent(name:"Command", value: "Stop", displayed: true) 
+  return sendCommand('STOP')
+}
+
+//
+//  SOAP call support
+//
 
 def sendQuery() {
   //Other queries: GetMute
@@ -306,16 +366,14 @@ def sendRawRequest(type, action, command, commandCode) {
   }
 }
 
-void calledBackHandler(physicalgraph.device.HubResponse hubResponse, command) {
-  log.debug "received response $hubResponse"
-}
-// the below calledBackHandler() is triggered when the device responds to the sendHubCommand() with "device_description.xml" resource
+//
+// Low-level IP/Port & hex conversions
+//
 
 private String convertIPtoHex(ipAddress) { 
     String hex = ipAddress.tokenize( '.' ).collect {  String.format( '%02x', it.toInteger() ) }.join()
     //log.debug "IP address entered is $ipAddress and the converted hex code is $hex"
     return hex
-
 }
 
 private String convertPortToHex(port) {
@@ -327,7 +385,6 @@ private String convertPortToHex(port) {
 private Integer convertHexToInt(hex) {
 	Integer.parseInt(hex,16)
 }
-
 
 private String convertHexToIP(hex) {
 	//log.debug("Convert hex to ip: $hex") 
