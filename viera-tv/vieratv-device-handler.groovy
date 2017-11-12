@@ -65,9 +65,9 @@ metadata {
 	}
 
   preferences {
-    section() {
-      input("TvIP", "string", title:"TV IP Address", description: "Please enter your TV's IP Address", required: true, displayDuringSetup: true)
-    }
+    // section() {
+    //   input("TvIP", "string", title:"TV IP Address", description: "Please enter your TV's IP Address", required: true, displayDuringSetup: true)
+    // }
     section() {
       input("Hdmi1Label", "string", title:"HDMI1 input name", description: "Enter a name for the HDMI input if you want to use it in an action", required: false, displayDuringSetup: true)
       input("Hdmi1CustomIconName", "string", title:"HDMI1 input custom icon name", description: "Smartthings icon name for this input", required: false, displayDuringSetup: true)
@@ -132,7 +132,6 @@ metadata {
   }
 }
 
-
 def installed() {
   log.debug "install handler"
   setComputedAttributed()
@@ -157,6 +156,24 @@ def refresh() {
   log.debug "refresh()"
 
   return checkVolume()
+}
+
+// Called by the service manager
+def sync(hexIp, hexPort) {
+  def ip = convertHexToIP(hexIp)
+  def port = convertHexToInt(hexPort)
+  log.debug "updating IP/Port to $ip:$port"
+
+	def existingIp = state["ip"];
+	def existingPort = state["port"]
+	if (ip && ip != existingIp) {
+		//updateDataValue("ip", ip)
+    //TvIp = ip
+    state["ip"] = ip
+	}
+	if (port && port != existingPort) {
+		state["port"] = port
+	}
 }
 
 //Constants
@@ -301,8 +318,8 @@ def sendCommand(commandCode) {
 }
 
 def sendRawRequest(type, action, command, commandCode) {
-  def host = TvIP 
-  def port = 55000
+  def host = state["ip"]//TvIP 
+  def port = state["port"] //55000
   def hosthex = convertIPtoHex(host).toUpperCase()
   def porthex = convertPortToHex(port).toUpperCase()
   device.deviceNetworkId = "$hosthex:$porthex" 
