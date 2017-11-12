@@ -1,8 +1,8 @@
 /** 
  *  
- *  Generic Camera Device v1.1.01302017
+ *  Panasonic Viera ST60 TV
  *
- *  Copyright 2017 patrick@patrickstuart.com
+ *  Copyright 2017 alexbaloc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -16,79 +16,122 @@
 */
 
 metadata {
-	definition (name: "Panasonic VIERA St60", namespace: "alexbaloc", author: "alexbaloc") {
+	definition (name: "Panasonic VIERA ST60", namespace: "alexbaloc", author: "alexbaloc") {
     capability "Switch"
-			command "mute" 
-			command "tv"
-      command "hdmi1"
-      command "hdmi2"
-      command "hdmi3"
+    capability "Polling"
+    capability "Refresh"
+    command "mute" 
+    command "tv"
+    command "hdmi1"
+    command "hdmi2"
+    command "hdmi3"
 
-      attribute "input", "string"
-      attribute "hdmi1", "string"
+    command "checkVolume"
+
+    // Currently selected input source
+    attribute "input", "enum", ["tv", "hdmi1", "hdmi2", "hdmi3"]
+    // Currently not used. Should serve to display the proper HDMI input names in the UI
+    attribute "hdmi1name", "string"
+    attribute "hdmi2name", "string"
+    attribute "hdmi3name", "string"
+    //not used yet
+    attribute "volume", "number"
+    attribute "muted", "enum", ["true", "false"]
 	}
 
   preferences {
-    input("TvIP", "string", title:"TV IP Address", description: "Please enter your TV's IP Address", required: true, displayDuringSetup: true)
-    input("Hdmi1Label", "string", title:"HDMI1 input name", description: "Enter a name for the HDMI input if you want to use it in an action", required: false, displayDuringSetup: true)
-    input("Hdmi1CustomIconName", "string", title:"HDMI1 input custom icon name", description: "Smartthings icon name for this input", required: false, displayDuringSetup: true)
-    input("Hdmi2Label", "string", title:"HDMI2 input name", description: "Enter a name for the HDMI input if you want to use it in an action", required: false, displayDuringSetup: true)
-    input("Hdmi3Label", "string", title:"HDMI3 input name", description: "Enter a name for the HDMI input if you want to use it in an action", required: false, displayDuringSetup: true)
+    section() {
+      input("TvIP", "string", title:"TV IP Address", description: "Please enter your TV's IP Address", required: true, displayDuringSetup: true)
+    }
+    section() {
+      input("Hdmi1Label", "string", title:"HDMI1 input name", description: "Enter a name for the HDMI input if you want to use it in an action", required: false, displayDuringSetup: true)
+      input("Hdmi1CustomIconName", "string", title:"HDMI1 input custom icon name", description: "Smartthings icon name for this input", required: false, displayDuringSetup: true)
+    }
+    section() {
+      input("Hdmi2Label", "string", title:"HDMI2 input name", description: "Enter a name for the HDMI input if you want to use it in an action", required: false, displayDuringSetup: true)
+    }
+    section() {
+      input("Hdmi3Label", "string", title:"HDMI3 input name", description: "Enter a name for the HDMI input if you want to use it in an action", required: false, displayDuringSetup: true)
+    }
 	}
     
 	simulator {
-    
 	}
 
   tiles {
-      standardTile("switch", "device.switch", width: 1, height: 1, canChangeIcon: true) {
-          state "on", label:'TV', action:"switch.off", icon:"st.Electronics.electronics15", backgroundColor:"#00a0dc"
-          state "off", label:'TV', action:"", icon:"st.Electronics.electronics15", backgroundColor:"#cccccc"
-      }
-      standardTile("power", "device.switch", width: 2, height: 2, canChangeIcon: false) {
-          state "on", label:'TV', action:"switch.off", icon:"st.thermostat.heating-cooling-off", backgroundColor:"#00a0dc"
-          state "off", label:'TV', action:"", icon:"st.Electronics.electronics15", backgroundColor:"#A9A9A9"
-      }
-      standardTile("mute", "mute", decoration: "flat", canChangeIcon: false) {
-          state "default", label:'Mute', action:"mute", icon:"st.custom.sonos.muted", backgroundColor:"#ffffff"
-      }    
-      standardTile("tv", "input", decoration: "flat", canChangeIcon: false) {
-          state "tv", label:'Input: TV', action:"tv", icon:"st.Electronics.electronics15", backgroundColor:"#00a0dc"
-          state "default", label:'Input: TV', action:"tv", icon:"st.Electronics.electronics15", backgroundColor:"#ffffff"
-      }
+    standardTile("switch", "device.switch", width: 1, height: 1, canChangeIcon: true) {
+        state "on", label:'TV', action:"switch.off", icon:"st.Electronics.electronics15", backgroundColor:"#00a0dc"
+        state "off", label:'TV', action:"switch.off", icon:"st.Electronics.electronics15", backgroundColor:"#cccccc"
+    }
+    standardTile("power", "device.switch", width: 2, height: 2, canChangeIcon: false) {
+        state "on", label:'TV', action:"switch.off", icon:"st.thermostat.heating-cooling-off", backgroundColor:"#00a0dc"
+        state "off", label:'TV', action:"", icon:"st.Electronics.electronics15", backgroundColor:"#A9A9A9"
+    }
+    standardTile("mute", "mute", decoration: "flat", canChangeIcon: false) {
+        state "default", label:'Mute', action:"mute", icon:"st.custom.sonos.muted", backgroundColor:"#ffffff"
+    }    
+    standardTile("tv", "input", decoration: "flat", canChangeIcon: false) {
+        state "tv", label:'Input: TV', action:"tv", icon:"st.Electronics.electronics15", backgroundColor:"#00a0dc"
+        state "default", label:'Input: TV', action:"tv", icon:"st.Electronics.electronics15", backgroundColor:"#ffffff"
+    }
 
-      standardTile("hdmi1", "input", decoration: "flat", canChangeIcon: false) {
-          state "hdmi1", label:'Input: HDMI1', action:"hdmi1", icon:"st.Electronics.electronics8", backgroundColor:"#00a0dc"
-          state "default", label:'Input: HDMI1', action:"hdmi1", icon:"st.Electronics.electronics8", backgroundColor:"#ffffff"
-      }
+    standardTile("hdmi1", "input", decoration: "flat", canChangeIcon: false) {
+        state "hdmi1", label:'Input: HDMI1', action:"hdmi1", icon:"st.Electronics.electronics8", backgroundColor:"#00a0dc"
+        state "default", label:'Input: HDMI1', action:"hdmi1", icon:"st.Electronics.electronics8", backgroundColor:"#ffffff"
+    }
 
-      //Test with multi-attribute to display both HDMI label & selected state
-      // multiAttributeTile(name:"hdmi1", type: "generic", width:1, height: 1) {
-			//     tileAttribute ("input", key: "PRIMARY_CONTROL") {
-      //         attributeState "hdmi1", label:'on',  action:"hdmi1", icon:"st.Electronics.electronics5", backgroundColor:"#00a0dc"
-      //         attributeState "default", label:'off',  action:"hdmi1", icon:"st.Electronics.electronics5", backgroundColor:"#ffffff"
-      //     }
-      //     tileAttribute("hdmi1", key: "SECONDARY_CONTROL") {
-    	// 			attributeState("default", label:'Input: ${currentValue}', icon: "st.Electronics.electronics5")                  
-      //     }
-      // }
-      standardTile("hdmi2", "input", decoration: "flat", canChangeIcon: false) {
-          state "hdmi2", label:'Input: HDMI2', action:"hdmi2", icon:"st.Electronics.electronics5", backgroundColor:"#00a0dc"
-          state "default", label:'Input: HDMI2', action:"hdmi2", icon:"st.Electronics.electronics5", backgroundColor:"#ffffff"
-      }
-      standardTile("hdmi3", "input", decoration: "flat", canChangeIcon: false) {
-          state "hdmi3", label:'Input: HDMI3', action:"hdmi3", icon:"st.Electronics.electronics18", backgroundColor:"#00a0dc"
-          state "default", label:'Input: HDMI3', action:"hdmi3", icon:"st.Electronics.electronics18", backgroundColor:"#ffffff"
-      }
-      main "switch"
-      details([ "power", "mute", "tv", "hdmi1", "hdmi2", "hdmi3"])
+    //Test with multi-attribute to display both HDMI label & selected state
+    // multiAttributeTile(name:"hdmi1", type: "generic", width:1, height: 1) {
+    //     tileAttribute ("input", key: "PRIMARY_CONTROL") {
+    //         attributeState "hdmi1", label:'on',  action:"hdmi1", icon:"st.Electronics.electronics5", backgroundColor:"#00a0dc"
+    //         attributeState "default", label:'off',  action:"hdmi1", icon:"st.Electronics.electronics5", backgroundColor:"#ffffff"
+    //     }
+    //     tileAttribute("hdmi1", key: "SECONDARY_CONTROL") {
+    // 			attributeState("default", label:'Input: ${currentValue}', icon: "st.Electronics.electronics5")                  
+    //     }
+    // }
+    standardTile("hdmi2", "input", decoration: "flat", canChangeIcon: false) {
+        state "hdmi2", label:'Input: HDMI2', action:"hdmi2", icon:"st.Electronics.electronics5", backgroundColor:"#00a0dc"
+        state "default", label:'Input: HDMI2', action:"hdmi2", icon:"st.Electronics.electronics5", backgroundColor:"#ffffff"
+    }
+    standardTile("hdmi3", "input", decoration: "flat", canChangeIcon: false) {
+        state "hdmi3", label:'Input: HDMI3', action:"hdmi3", icon:"st.Electronics.electronics18", backgroundColor:"#00a0dc"
+        state "default", label:'Input: HDMI3', action:"hdmi3", icon:"st.Electronics.electronics18", backgroundColor:"#ffffff"
+    }
+    standardTile("refresh", "", decoration: "flat", canChangeIcon: false) {
+        state "default", label:'Refresh', action:"checkVolume", icon:"st.Electronics.electronics13", backgroundColor:"#ffffff"
+    }
+
+    main "switch"
+    details([ "power", "mute", "tv", "hdmi1", "hdmi2", "hdmi3", "refresh"])
   }
 }
 
+
 def installed() {
-  log.debug "install handler. $Hdmi1Label"
-  setStates()
-  runEvery1Minute(checkVolume)
+  log.debug "install handler"
+  setComputedAttributed()
+}
+
+// 
+//  Polling/refresh/update still WIP. Not clear how it should work
+//
+def updated() {
+  log.debug "updated with settings: ${settings}"
+  return refresh()
+}
+
+// polling.poll 
+def poll() {
+  log.debug "poll()"
+  return refresh()
+}
+
+// refresh.refresh
+def refresh() {
+  log.debug "refresh()"
+
+  return checkVolume()
 }
 
 //Constants
@@ -96,52 +139,56 @@ def getHdmi1Name() { return Hdmi1Label ? Hdmi1Label : 'HDMI1' }
 def getHdmi2Name() { return Hdmi2Label ? Hdmi2Label : 'HDMI2' }
 def getHdmi3Name() { return Hdmi3Label ? Hdmi3Label : 'HDMI3' }
 
-def setStates() {
-  sendEvent(name: "hdmi1", value: getHdmi1Name(), displayed: false)
-  sendEvent(name: "hdmi2", value: getHdmi2Name(), displayed: false)
-  sendEvent(name: "hdmi3", value: getHdmi3Name, displayed: false)
-
-  return checkVolume()
+def setComputedAttributed() {
+  sendEvent(name: "hdmi1name", value: getHdmi1Name(), displayed: false)
+  sendEvent(name: "hdmi2name", value: getHdmi2Name(), displayed: false)
+  sendEvent(name: "hdmi3name", value: getHdmi3Name(), displayed: false)
 }
 
 def parse(String description) {
 
-    log.debug "Parsing '${description}'"
-    
-    def msg = parseLanMessage(description)
-    log.debug "parsed message: $msg"
+  log.debug "Parsing '${description}'"
+  
+  def msg = parseLanMessage(description)
+  log.debug "parsed message: $msg"
 
-    def headersAsString = msg.header // => headers as a string
-    def headerMap = msg.headers      // => headers as a Map
-    def body = msg.body              // => request body as a string
-    def status = msg.status          // => http status code of the response
-    def json = msg.json              // => any JSON included in response body, as a data structure of lists and maps
-    def xml = msg.xml                // => any XML included in response body, as a document tree structure
-    def data = msg.data  
+  def headersAsString = msg.header // => headers as a string
+  def headerMap = msg.headers      // => headers as a Map
+  def body = msg.body              // => request body as a string
+  def status = msg.status          // => http status code of the response
+  def json = msg.json              // => any JSON included in response body, as a data structure of lists and maps
+  def xml = msg.xml                // => any XML included in response body, as a document tree structure
+  def data = msg.data  
 
-    log.debug "headers: $headerMap"
-    log.debug "status: $status"
-    log.debug "data: $data"
-    log.debug "xml: $xml"
-    log.debug "json: $json"
+//  log.debug "headers: $headerMap"
+//  log.debug "status: $status"
+  log.debug "data: $data"
+//  log.debug "xml: $xml"
 
-    def switchValue = 'off'
-    if (msg.xml) {
-      log.debug "todo: check SOAP contents"
-      //def rootNode = new XmlSlurper().parseText(msg.xml)
-      //log.debug rootNode
+  if (msg.xml) {
+    log.debug "todo: check SOAP contents"
 
-      switchValue = 'on'
-    }
+  }
 
-    def switchStateEv = createEvent(name: "switch", value: switchValue)
+  if (msg.requestId != 'POWER') {
+    log.debug "Signaling power is on"
+
+    // Since we got a reply, the TV must be on. 
+    // The POWER command is the only exception, and we're setting a custom (non-unique) Request ID for that
+    def switchStateEv = createEvent(name: "switch", value: "on")
     return [switchStateEv]      
+  } else {
+    log.debug "Parse called for a POWER OFF request - ignoring"
+  }
+
+  return null;
 }
 
 def off() {
 	log.debug "Turning TV OFF"  
   
-  sendEvent(name:"switch", value: "off", descriptionText: "Power off",  displayed: true)
+  //reset other states
+  sendEvent(name:"input", value: "", descriptionText: "Reset input", displayed: false)
   return sendCommand('POWER')
 }
 
@@ -176,86 +223,105 @@ def hdmi3() {
 }
 
 def checkVolume() {
-	log.debug "Checking volume"  
+	log.debug "Checking volume - Status update!"  
+
+  //doesn't work. Even if we generate the correct HubAction wrapper, it's not being sent to the device
+  //runEvery1Minute(sendQuery)
+
   return sendQuery()
 }
 
 def sendQuery() {
-  return sendRawRequest('render', 'GetVolume', '<InstanceID>0</InstanceID><Channel>Master</Channel>')
+  //Other queries: GetMute
+  return sendRawRequest('render', 'GetVolume', '<InstanceID>0</InstanceID><Channel>Master</Channel>', '')
 }
 
 def sendCommand(commandCode) {
-  return sendRawRequest('command', 'X_SendKey', "<X_KeyEvent>NRC_$commandCode-ONOFF</X_KeyEvent>")
+  return sendRawRequest('command', 'X_SendKey', "<X_KeyEvent>NRC_$commandCode-ONOFF</X_KeyEvent>", commandCode)
 }
 
-def sendRawRequest(type, action, command) {
-    def host = TvIP 
-    def port = 55000
-    def hosthex = convertIPtoHex(host).toUpperCase() //thanks to @foxxyben for catching this
-    def porthex = convertPortToHex(port).toUpperCase()
-    device.deviceNetworkId = "$hosthex:$porthex" 
-    
-    log.debug "The device id configured is: $device.deviceNetworkId"
-            
-    def url
-    def urn
-    if (type == "command") {
-        url = "/nrc/control_0"
-        urn = "panasonic-com:service:p00NetworkControl:1"
-    } else if (type == 'render') {
-        url = "/dmr/control_0"
-        urn = "schemas-upnp-org:service:RenderingControl:1"
-    }
-
-    log.debug "ULR: $url, URN: $urn"
+def sendRawRequest(type, action, command, commandCode) {
+  def host = TvIP 
+  def port = 55000
+  def hosthex = convertIPtoHex(host).toUpperCase()
+  def porthex = convertPortToHex(port).toUpperCase()
+  device.deviceNetworkId = "$hosthex:$porthex" 
   
-    def headers = ["Content-Type": "text/xml; charset=\"utf-8\"",
-          "HOST": "$host:$port",
-          "SOAPACTION": "\"urn:$urn#$action\""]
-    
-    log.debug "The Header is $headers"
+  log.debug "sending $type '$command'"
+          
+  def url
+  def urn
+  if (type == "command") {
+    url = "/nrc/control_0"
+    urn = "panasonic-com:service:p00NetworkControl:1"
+  } else if (type == 'render') {
+    url = "/dmr/control_0"
+    urn = "schemas-upnp-org:service:RenderingControl:1"
+  }
 
-    def soapBody = "<?xml version='1.0' encoding='utf-8'?> \
-                    <s:Envelope xmlns:s='http://schemas.xmlsoap.org/soap/envelope/' s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'> \
-                      <s:Body> \
-                        <u:$action xmlns:u='urn:$urn'> \
-                        $command \
-                        </u:$action> \
-                      </s:Body> \
-                    </s:Envelope>";
+  def headers = ["Content-Type": "text/xml; charset=\"utf-8\"",
+    "HOST": "$host:$port",
+    "SOAPACTION": "\"urn:$urn#$action\""]
+  
+  //log.debug "The Header is $headers"
 
-    log.debug soapBody
+  def soapBody = "<?xml version='1.0' encoding='utf-8'?> \
+                  <s:Envelope xmlns:s='http://schemas.xmlsoap.org/soap/envelope/' s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/'> \
+                    <s:Body> \
+                      <u:$action xmlns:u='urn:$urn'> \
+                      $command \
+                      </u:$action> \
+                    </s:Body> \
+                  </s:Envelope>";
 
-    try {
+  //log.debug soapBody
+
+  try {
     def hubAction = new physicalgraph.device.HubAction(
     	method: "POST",
     	path: "http://$host:$port$url",
      	body: soapBody,
-    	headers: headers
+    	headers: headers,
     )
-        	
+
+    if (commandCode =='POWER') {
+      hubAction.requestId = 'POWER'
+    }
+
+    //TODO: not clear why this was set. 
+    //When enabled, SOAP message responses are no longer received in parse()
     //hubAction.options = [outputMsgToS3:true]
-    log.debug hubAction
+
+    //log.debug hubAction
+
+    // Before returning the action, we can assume the TV is turned off. 
+    // If we receive any replies, we'll turin it back on. 
+    // Kind of hackish, but I see no way around it for now
+    sendEvent(name: "switch", value: "off", displayed: false)
 
     return hubAction
-    }
-    catch (Exception e) {
-    	log.debug "Hit Exception $e on $hubAction"
-    }
-    
+  }
+  catch (Exception e) {
+    log.debug "Hit Exception $e on $hubAction"
+  }
 }
+
+void calledBackHandler(physicalgraph.device.HubResponse hubResponse, command) {
+  log.debug "received response $hubResponse"
+}
+// the below calledBackHandler() is triggered when the device responds to the sendHubCommand() with "device_description.xml" resource
 
 private String convertIPtoHex(ipAddress) { 
     String hex = ipAddress.tokenize( '.' ).collect {  String.format( '%02x', it.toInteger() ) }.join()
-    log.debug "IP address entered is $ipAddress and the converted hex code is $hex"
+    //log.debug "IP address entered is $ipAddress and the converted hex code is $hex"
     return hex
 
 }
 
 private String convertPortToHex(port) {
 	String hexport = port.toString().format( '%04x', port.toInteger() )
-    log.debug hexport
-    return hexport
+  //log.debug hexport
+  return hexport
 }
 
 private Integer convertHexToInt(hex) {
@@ -264,13 +330,13 @@ private Integer convertHexToInt(hex) {
 
 
 private String convertHexToIP(hex) {
-	log.debug("Convert hex to ip: $hex") 
+	//log.debug("Convert hex to ip: $hex") 
 	[convertHexToInt(hex[0..1]),convertHexToInt(hex[2..3]),convertHexToInt(hex[4..5]),convertHexToInt(hex[6..7])].join(".")
 }
 
 private getHostAddress() {
 	def parts = device.deviceNetworkId.split(":")
-    log.debug device.deviceNetworkId
+  //log.debug device.deviceNetworkId
 	def ip = convertHexToIP(parts[0])
 	def port = convertHexToInt(parts[1])
 	return ip + ":" + port
