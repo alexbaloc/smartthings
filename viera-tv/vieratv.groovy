@@ -21,6 +21,11 @@ metadata {
 			command "mute" 
 			command "tv"
       command "hdmi1"
+      command "hdmi2"
+      command "hdmi3"
+
+      attribute "input", "string"
+      attribute "hdmi1", "string"
 	}
 
   preferences {
@@ -37,28 +42,70 @@ metadata {
 
   tiles {
       standardTile("switch", "device.switch", width: 1, height: 1, canChangeIcon: true) {
-          state "default", label:'TV', action:"switch.off", icon:"st.Electronics.electronics15", backgroundColor:"#ffffff"
+          state "on", label:'TV', action:"switch.off", icon:"st.Electronics.electronics15", backgroundColor:"#00a0dc"
+          state "off", label:'TV', action:"", icon:"st.Electronics.electronics15", backgroundColor:"#cccccc"
       }
       standardTile("power", "device.switch", width: 2, height: 2, canChangeIcon: false) {
-          state "default", label:'', action:"switch.off", decoration: "flat", icon:"st.thermostat.heating-cooling-off", backgroundColor:"#f45c42"
+          state "on", label:'TV', action:"switch.off", icon:"st.thermostat.heating-cooling-off", backgroundColor:"#00a0dc"
+          state "off", label:'TV', action:"", icon:"st.Electronics.electronics15", backgroundColor:"#A9A9A9"
       }
-      standardTile("mute", "device.switch", decoration: "flat", canChangeIcon: false) {
+      standardTile("mute", "mute", decoration: "flat", canChangeIcon: false) {
           state "default", label:'Mute', action:"mute", icon:"st.custom.sonos.muted", backgroundColor:"#ffffff"
       }    
-      standardTile("tv", "device.switch", decoration: "flat", canChangeIcon: false) {
+      standardTile("tv", "input", decoration: "flat", canChangeIcon: false) {
+          state "tv", label:'Input: TV', action:"tv", icon:"st.Electronics.electronics15", backgroundColor:"#00a0dc"
           state "default", label:'Input: TV', action:"tv", icon:"st.Electronics.electronics15", backgroundColor:"#ffffff"
       }
 
-      standardTile("hdmi1", "device.switch", decoration: "flat", canChangeIcon: false) {
-          state "default", label:'Input: HDMI1', action:"hdmi1", icon:"st.Electronics.electronics5", backgroundColor:"#ffffff"
+      standardTile("hdmi1", "input", decoration: "flat", canChangeIcon: false) {
+          state "hdmi1", label:'Input: HDMI1', action:"hdmi1", icon:"st.Electronics.electronics8", backgroundColor:"#00a0dc"
+          state "default", label:'Input: HDMI1', action:"hdmi1", icon:"st.Electronics.electronics8", backgroundColor:"#ffffff"
       }
 
+      //Test with multi-attribute to display both HDMI label & selected state
+      // multiAttributeTile(name:"hdmi1", type: "generic", width:1, height: 1) {
+			//     tileAttribute ("input", key: "PRIMARY_CONTROL") {
+      //         attributeState "hdmi1", label:'on',  action:"hdmi1", icon:"st.Electronics.electronics5", backgroundColor:"#00a0dc"
+      //         attributeState "default", label:'off',  action:"hdmi1", icon:"st.Electronics.electronics5", backgroundColor:"#ffffff"
+      //     }
+      //     tileAttribute("hdmi1", key: "SECONDARY_CONTROL") {
+    	// 			attributeState("default", label:'Input: ${currentValue}', icon: "st.Electronics.electronics5")                  
+      //     }
+      // }
+      standardTile("hdmi2", "input", decoration: "flat", canChangeIcon: false) {
+          state "hdmi2", label:'Input: HDMI2', action:"hdmi2", icon:"st.Electronics.electronics5", backgroundColor:"#00a0dc"
+          state "default", label:'Input: HDMI2', action:"hdmi2", icon:"st.Electronics.electronics5", backgroundColor:"#ffffff"
+      }
+      standardTile("hdmi3", "input", decoration: "flat", canChangeIcon: false) {
+          state "hdmi3", label:'Input: HDMI3', action:"hdmi3", icon:"st.Electronics.electronics18", backgroundColor:"#00a0dc"
+          state "default", label:'Input: HDMI3', action:"hdmi3", icon:"st.Electronics.electronics18", backgroundColor:"#ffffff"
+      }
       main "switch"
-      details([ "power", "mute", "tv", "hdmi1"])
+      details([ "power", "mute", "tv", "hdmi1", "hdmi2", "hdmi3"])
   }
 }
 
+def installed() {
+  log.debug "install handler. $Hdmi1Label"
+  setStates()
+  runEvery1Minute(checkVolume)
+}
+
+//Constants
+def getHdmi1Name() { return Hdmi1Label ? Hdmi1Label : 'HDMI1' }
+def getHdmi2Name() { return Hdmi2Label ? Hdmi2Label : 'HDMI2' }
+def getHdmi3Name() { return Hdmi3Label ? Hdmi3Label : 'HDMI3' }
+
+def setStates() {
+  sendEvent(name: "hdmi1", value: getHdmi1Name(), displayed: false)
+  sendEvent(name: "hdmi2", value: getHdmi2Name(), displayed: false)
+  sendEvent(name: "hdmi3", value: getHdmi3Name, displayed: false)
+
+  return checkVolume()
+}
+
 def parse(String description) {
+
     log.debug "Parsing '${description}'"
     
     def msg = parseLanMessage(description)
@@ -78,25 +125,23 @@ def parse(String description) {
     log.debug "xml: $xml"
     log.debug "json: $json"
 
+    def switchValue = 'off'
     if (msg.xml) {
       log.debug "todo: check SOAP contents"
       //def rootNode = new XmlSlurper().parseText(msg.xml)
       //log.debug rootNode
 
-      def dummyOn = createEvent(name: "switch", value: "on")
-      return [dummyOn]      
+      switchValue = 'on'
     }
 
-    //def dummyOn = createEvent(name: "switch", value: "on")
-    //return [dummyOn]
-
-    return null;
+    def switchStateEv = createEvent(name: "switch", value: switchValue)
+    return [switchStateEv]      
 }
 
 def off() {
 	log.debug "Turning TV OFF"  
   
-  sendEvent(name:"Command", value: "Power Off", displayed: true)
+  sendEvent(name:"switch", value: "off", descriptionText: "Power off",  displayed: true)
   return sendCommand('POWER')
 }
 
@@ -108,14 +153,26 @@ def mute() {
 
 def tv() {
 	log.debug "Switch input: TV"  
-	sendEvent(name:"Command", value: "Switch input: TV", displayed: true) 
+	sendEvent(name:"input", value: "tv", descriptionText: "Switch Input: TV", displayed: true)
   return sendCommand('TV')
 }
 
 def hdmi1() {
-	log.debug "Switch input: $Hdmi1Label (HDMI1)"  
-	sendEvent(name:"Command", value: "Switch input: HDMI1", displayed: true) 
+	log.debug "Switch input: $Hdmi1Label (HDMI1)" 
+	sendEvent(name:"input", value: "hdmi1", descriptionText: "Switch Input: ${getHdmi1Name()}", displayed: true)
   return sendCommand('HDMI1')
+}
+
+def hdmi2() {
+	log.debug "Switch input: $Hdmi2Label (HDMI2)"  
+	sendEvent(name:"input", value: "hdmi2", descriptionText: "Switch Input: ${getHdmi2Name()}", displayed: true)
+  return sendCommand('HDMI2')
+}
+
+def hdmi3() {
+	log.debug "Switch input: $Hdmi3Label (HDMI3)"  
+	sendEvent(name:"input", value: "hdmi3", descriptionText: "Switch Input: ${getHdm3Name()}", displayed: true)
+  return sendCommand('HDMI3')
 }
 
 def checkVolume() {
