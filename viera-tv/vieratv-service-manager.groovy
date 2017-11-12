@@ -1,7 +1,7 @@
 /**
- *  Generic UPnP Service Manager
+ *  Panasonic Viera ST60 Service manager
  *
- *  Copyright 2016 SmartThings
+ *  Copyright 2017 alexbaloc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -14,7 +14,7 @@
  *
  */
 definition(
-		name: "Panasonic Viera ST60 Service Manager",
+		name: "Panasonic Viera TV Service Manager",
 		namespace: "alexbaloc",
 		author: "alexbaloc",
 		description: "Service Manager used to disover Panasonic Viera ST60 devices",
@@ -28,7 +28,7 @@ preferences {
 	page(name: "deviceDiscovery", title: "Searching for Panasonic Viera devices", content: "deviceDiscovery")
 }
 
-def getUpnpSearchTarger() {
+def getUpnpSearchTarget() {
   return "urn:panasonic-com:device:p00RemoteController:1"
 }
 def deviceDiscovery() {
@@ -56,6 +56,17 @@ def deviceDiscovery() {
 def installed() {
 	initialize()
 }
+/*
+def uninstalled() {
+  removeChildDevices(getDevices())
+}
+
+private removeChildDevices(delete) {
+  delete.each {
+    deleteChildDevice(it.deviceNetworkId)
+  }
+}
+*/
 
 def updated() {
 	unsubscribe()
@@ -75,75 +86,14 @@ def initialize() {
 	runEvery5Minutes("ssdpDiscover")
 }
 
-
-/*
-// implementation from https://github.com/logic-dev/VieraControl/blob/master/VieraControl/Client.cs
-
-private bool _FindTV()
-        {
-            IPEndPoint LocalEndPoint = new IPEndPoint(IPAddress.Any, 60000);
-            IPEndPoint MulticastEndPoint = new IPEndPoint(IPAddress.Parse("239.255.255.250"), 1900);
-
-            Socket UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
-            UdpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            UdpSocket.Bind(LocalEndPoint);
-            UdpSocket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(MulticastEndPoint.Address, IPAddress.Any));
-            UdpSocket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 2);
-            UdpSocket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastLoopback, true);
-
-            Console.WriteLine("UDP-Socket setup done...\r\n");
-
-            string SearchString = "M-SEARCH * HTTP/1.1\r\nHOST:239.255.255.250:1900\r\nMAN:\"ssdp:discover\"\r\nST:urn:panasonic-com:device:p00RemoteController:1\r\nMX:1\r\n\r\n";
-
-            UdpSocket.SendTo(Encoding.UTF8.GetBytes(SearchString), SocketFlags.None, MulticastEndPoint);
-
-            Console.WriteLine("M-Search sent...\r\n");
-
-            byte[] ReceiveBuffer = new byte[64000];
-
-            int ReceivedBytes = 0;
-
-            Stopwatch s = new Stopwatch();
-            s.Start();
-
-            bool found = false;
-
-            while (found)
-            {
-                if (UdpSocket.Available > 0)
-                {
-                    ReceivedBytes = UdpSocket.Receive(ReceiveBuffer, SocketFlags.None);
-
-                    if (ReceivedBytes > 0)
-                    {
-                        Console.WriteLine(Encoding.UTF8.GetString(ReceiveBuffer, 0, ReceivedBytes));
-                        found = true;
-                        return true;
-                    }
-                    else
-                        return false;
-                }
-
-                if (s.Elapsed > TimeSpan.FromSeconds(5))
-                {
-                    found = true;
-                }
-            }
-
-            return false;
-        }
-    }
-*/
-
 void ssdpDiscover() {
     log.debug "ssdpDiscover"
-	sendHubCommand(new physicalgraph.device.HubAction("lan discovery ${searchTarget}", physicalgraph.device.Protocol.LAN))
+	sendHubCommand(new physicalgraph.device.HubAction("lan discovery ${getUpnpSearchTarget()}", physicalgraph.device.Protocol.LAN))
 }
 
 void ssdpSubscribe() {
     log.debug "subscribe"
-	subscribe(location, "ssdpTerm.${searchTarget}", ssdpHandler)
+	subscribe(location, "ssdpTerm.${getUpnpSearchTarget()}", ssdpHandler)
 }
 
 Map verifiedDevices() {
@@ -201,14 +151,17 @@ def addDevices() {
 			log.debug "Creating New TV with dni: ${selectedDevice.value.mac}"
 			def child = addChildDevice("alexbaloc", "Panasonic VIERA ST60", selectedDevice.value.mac, selectedDevice?.value.hub, [
 				"label": selectedDevice?.value?.name ?: "Viera TV",
+        //data below cannot be used in the client device
 				"data": [
 					"mac": selectedDevice.value.mac,
-					"TvIP": selectedDevice.value.networkAddress,
+					"ip": selectedDevice.value.networkAddress,
 					"port": selectedDevice.value.deviceAddress
 				]
 			])
 
-      child.sync(selectedDevice.value.networkAddress, selectedDevice.value.deviceAddress)
+      def ip = convertHexToIP(selectedDevice.value.networkAddress)
+      def port = convertHexToInt(selectedDevice.value.deviceAddress)
+      child.sync(ip, port)
 		} else {
       log.debug "nothing to add"
     }
@@ -240,7 +193,11 @@ def ssdpHandler(evt) {
 			def child = getChildDevice(parsedEvent.mac)
 			if (child) {
         log.debug "ssdpHandler  - synch child: $child"
-				child.sync(parsedEvent.networkAddress, parsedEvent.deviceAddress)
+
+        def ip = convertHexToIP(parsedEvent.networkAddress)
+        def port = convertHexToInt(parsedEvent.deviceAddress)
+
+				child.sync(ip, port)
 			}
 		}
 	} else {

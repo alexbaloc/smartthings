@@ -62,6 +62,8 @@ metadata {
     //not used yet
     attribute "volume", "number"
     attribute "muted", "enum", ["true", "false"]
+    //display only
+    attribute "ip", "string"
 	}
 
   preferences {
@@ -123,12 +125,17 @@ metadata {
         state "hdmi3", label:'Input: HDMI3', action:"hdmi3", icon:"st.Electronics.electronics18", backgroundColor:"#00a0dc"
         state "default", label:'Input: HDMI3', action:"hdmi3", icon:"st.Electronics.electronics18", backgroundColor:"#ffffff"
     }
+    
+    valueTile("ipinfo", "ip", width:3, canChangeIcon: false) {
+      state "default", label:'${currentValue}', backgroundColor:"#ffffff"
+    }
+
     standardTile("refresh", "", decoration: "flat", canChangeIcon: false) {
         state "default", label:'Refresh', action:"checkVolume", icon:"st.Electronics.electronics13", backgroundColor:"#ffffff"
     }
 
     main "switch"
-    details([ "power", "mute", "tv", "hdmi1", "hdmi2", "hdmi3", "refresh"])
+    details([ "power", "mute", "tv", "hdmi1", "hdmi2", "hdmi3", "ipinfo", "refresh"])
   }
 }
 
@@ -159,17 +166,15 @@ def refresh() {
 }
 
 // Called by the service manager
-def sync(hexIp, hexPort) {
-  def ip = convertHexToIP(hexIp)
-  def port = convertHexToInt(hexPort)
+def sync(ip, port) {
   log.debug "updating IP/Port to $ip:$port"
 
 	def existingIp = state["ip"];
 	def existingPort = state["port"]
 	if (ip && ip != existingIp) {
-		//updateDataValue("ip", ip)
-    //TvIp = ip
     state["ip"] = ip
+    //also update the ui
+    sendEvent(name: "ip", value: ip, displayed: false)
 	}
 	if (port && port != existingPort) {
 		state["port"] = port
@@ -320,10 +325,7 @@ def sendCommand(commandCode) {
 def sendRawRequest(type, action, command, commandCode) {
   def host = state["ip"]//TvIP 
   def port = state["port"] //55000
-  def hosthex = convertIPtoHex(host).toUpperCase()
-  def porthex = convertPortToHex(port).toUpperCase()
-  device.deviceNetworkId = "$hosthex:$porthex" 
-  
+
   log.debug "sending $type '$command'"
           
   def url
@@ -381,37 +383,4 @@ def sendRawRequest(type, action, command, commandCode) {
   catch (Exception e) {
     log.debug "Hit Exception $e on $hubAction"
   }
-}
-
-//
-// Low-level IP/Port & hex conversions
-//
-
-private String convertIPtoHex(ipAddress) { 
-    String hex = ipAddress.tokenize( '.' ).collect {  String.format( '%02x', it.toInteger() ) }.join()
-    //log.debug "IP address entered is $ipAddress and the converted hex code is $hex"
-    return hex
-}
-
-private String convertPortToHex(port) {
-	String hexport = port.toString().format( '%04x', port.toInteger() )
-  //log.debug hexport
-  return hexport
-}
-
-private Integer convertHexToInt(hex) {
-	Integer.parseInt(hex,16)
-}
-
-private String convertHexToIP(hex) {
-	//log.debug("Convert hex to ip: $hex") 
-	[convertHexToInt(hex[0..1]),convertHexToInt(hex[2..3]),convertHexToInt(hex[4..5]),convertHexToInt(hex[6..7])].join(".")
-}
-
-private getHostAddress() {
-	def parts = device.deviceNetworkId.split(":")
-  //log.debug device.deviceNetworkId
-	def ip = convertHexToIP(parts[0])
-	def port = convertHexToInt(parts[1])
-	return ip + ":" + port
 }
